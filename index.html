@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#121619" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E" /><title>Job Interview Zoom Meeting</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #f3f5f7;
+        background: #121619;
+        --chrome: #1e1f20;
+        --muted: #8b8e91;
+        --line: #343638;
+        --blue: #0b74f5;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+      button, input { font: inherit; }
+      button { color: inherit; }
+
+      .app { height: 100dvh; min-height: 440px; display: flex; flex-direction: column; background: #121619; }
+      .titlebar {
+        height: clamp(36px, 5.05vh, 60px); flex: 0 0 auto; display: flex; align-items: center;
+        justify-content: space-between; padding: 0 clamp(12px, 1vw, 21px); background: var(--chrome);
+      }
+      .meeting-identity, .meeting-title, .app-actions { display: flex; align-items: center; }
+      .meeting-identity { gap: clamp(18px, 2.65vw, 53px); min-width: 0; }
+      .zoom-wordmark { width: clamp(62px, 5vw, 100px); line-height: .94; white-space: nowrap; color: #f3f5f7; }
+      .zoom-wordmark span { display: block; font-size: clamp(11px, .85vw, 17px); font-weight: 500; }
+      .zoom-wordmark strong { display: block; font-size: clamp(14px, 1.05vw, 21px); line-height: 1.1; }
+      .meeting-title { gap: 8px; white-space: nowrap; font-size: clamp(12px, .9vw, 18px); overflow: hidden; text-overflow: ellipsis; }
+      .meeting-title img { width: 18px; height: 18px; flex: none; }
+      .app-actions { gap: clamp(10px, 1.2vw, 24px); flex: none; }
+      .header-icon { display: grid; place-items: center; width: 22px; height: 24px; padding: 0; border: 0; background: transparent; }
+      .header-icon img { width: 100%; height: 100%; object-fit: contain; }
+      .upgrade { border: 0; border-radius: 99px; padding: 7px 12px; background: #0b74f5; color: white; font-size: clamp(11px, .8vw, 16px); white-space: nowrap; }
+      .window-controls { width: clamp(76px, 7.75vw, 155px); height: 16px; object-fit: contain; }
+
+      .workspace { min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) clamp(320px, 24.9vw, 498px); gap: clamp(4px, .45vw, 9px); padding-right: clamp(2px, .2vw, 4px); }
+      .stage { min-width: 0; min-height: 0; display: grid; grid-template-rows: 13.31fr 74.45fr 5.59fr 6.65fr; background: #121619; }
+      .letterbox { min-height: 0; background: #121619; }
+      .participants { min-height: 0; display: flex; gap: 6px; padding: 0 4px; overflow: hidden; }
+      .participant { min-width: 0; min-height: 0; flex: 1 1 0; position: relative; overflow: hidden; border: 1px solid #343638; border-radius: 6px; background: #090a0b; }
+      .participant.candidate { border: 3px solid #2be33a; }
+      .participant img, .participant video { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+      .participant video { background: #151719; }
+      .nameplate { position: absolute; z-index: 2; left: 5px; bottom: 5px; padding: 4px 6px; border-radius: 3px; background: rgb(51 51 51 / 72%); font-size: clamp(12px, .8vw, 16px); }
+      .camera-placeholder { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 10px; background: #202326; color: #b6bac0; }
+      .camera-placeholder { padding: 24px; text-align: center; z-index: 1; }
+      .camera-placeholder button, .camera-settings { border: 1px solid #535860; border-radius: 8px; background: #272f38; color: white; padding: 9px 12px; }
+      .camera-placeholder button { cursor: pointer; background: #0b74f5; }
+      .camera-status { max-width: 340px; font-size: 14px; line-height: 1.5; }
+      .camera-settings { position: absolute; z-index: 3; right: 8px; top: 8px; max-width: calc(100% - 16px); font-size: 12px; }
+      .camera-settings select { max-width: 180px; background: #272f38; color: white; border: 0; }
+      .workspace.chat-hidden { grid-template-columns: minmax(0, 1fr); padding-right: 0; }
+      .workspace.chat-hidden .chat-shell { display: none; }
+      .chat-panel { grid-template-columns: minmax(0, 1fr); }
+      .message-history, .message > div { min-width: 0; }
+      button:focus-visible, select:focus-visible { outline: 2px solid #4d9bff; outline-offset: 2px; }
+      .candidate-feed.mirrored { transform: scaleX(-1); }
+      .camera-placeholder img { position: static; width: 32px; height: 32px; opacity: .8; }
+      .candidate.camera-off .candidate-feed { display: none; }
+      .candidate.camera-off .camera-placeholder { display: flex; }
+
+      .toolbar { min-height: 0; display: flex; align-items: center; justify-content: space-between; gap: 2px; padding: 0 clamp(6px, 1.15vw, 23px); background: #050607; }
+      .meeting-action { position: relative; min-width: 45px; width: clamp(54px, 4.5vw, 90px); height: 100%; display: flex; align-items: center; justify-content: center; }
+      .control-btn { width: 100%; height: 100%; border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 2px 0; cursor: pointer; }
+      .control-btn:hover { background: #191b1d; }
+      .control-icon { width: clamp(20px, 1.5vw, 30px); height: clamp(20px, 1.5vw, 30px); display: grid; place-items: center; position: relative; }
+      .control-icon img { width: 100%; height: 100%; object-fit: contain; }
+      .control-btn.is-off .control-icon::after { content: ""; position: absolute; width: 130%; height: 2px; background: #f54b61; transform: rotate(-45deg); box-shadow: 0 0 0 1px #050607; }
+      .control-label { white-space: nowrap; font-size: clamp(10px, .8vw, 16px); line-height: 1; }
+      .action-caret { position: absolute; right: -2px; top: 31%; width: 10px; height: 6px; object-fit: contain; opacity: .85; pointer-events: none; }
+      .end-action .control-icon { filter: none; }
+      .end-action .control-icon img { filter: brightness(0) saturate(100%) invert(49%) sepia(76%) saturate(2122%) hue-rotate(315deg) brightness(101%) contrast(91%); }
+
+      .chat-shell { min-width: 0; min-height: 0; padding: 4px 0; }
+      .chat-panel { height: 100%; min-height: 0; overflow: hidden; display: grid; grid-template-rows: 5.36fr 8.58fr minmax(0, 69.08fr) 2.86fr 14.12fr; border: 2px solid var(--line); border-radius: 12px; background: var(--chrome); }
+      .chat-header { min-height: 0; border-bottom: 1px solid var(--line); position: relative; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(12px, 2.15vw, 43px); }
+      .chat-heading { display: flex; align-items: center; gap: 7px; min-width: 0; color: #4d9bff; font-weight: 700; font-size: clamp(13px, .9vw, 18px); white-space: nowrap; }
+      .chat-heading img { width: 22px; height: 22px; flex: none; }
+      .chat-heading span { overflow: hidden; text-overflow: ellipsis; }
+      .chat-window-actions { display: flex; align-items: center; gap: 13px; flex: none; }
+      .plain-icon { display: grid; place-items: center; width: 18px; height: 20px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+      .plain-icon img { max-width: 100%; max-height: 100%; }
+      .dots { font-size: 20px; color: var(--muted); }
+      .chat-tabs { min-height: 0; display: flex; gap: 14px; align-items: stretch; padding: 8px 10px 5px; border-bottom: 2px solid var(--line); }
+      .chat-tab { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 64px; border: 0; background: transparent; color: var(--muted); font-size: clamp(11px, .75vw, 15px); cursor: pointer; }
+      .chat-tab .tab-icon { width: 56px; height: 56px; display: grid; place-items: center; border: 1px solid #4a4e52; border-radius: 50%; }
+      .chat-tab .tab-icon img { width: 26px; height: 26px; object-fit: contain; }
+      .chat-tab.selected { color: #4d9bff; font-weight: 700; }
+      .chat-tab.selected .tab-icon { border: 4px solid var(--blue); }
+      .tab-divider { width: 2px; height: 45px; margin: auto 0; background: #61676d; }
+      .message-history { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-color: #535860 transparent; scrollbar-width: thin; display: flex; flex-direction: column; gap: clamp(10px, 1.18vh, 14px); padding: 16px 16px 22px; }
+      .message-history::-webkit-scrollbar { width: 8px; }
+      .message-history::-webkit-scrollbar-thumb { background: #535860; border: 2px solid #1e1f20; border-radius: 99px; }
+      .channel-label { flex: none; margin: 0 0 2px; color: #4d9bff; font-size: clamp(13px, .85vw, 17px); line-height: 1.3; }
+      .message { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 11px; flex: none; align-items: start; animation: message-enter 220ms ease-out both; }
+      @keyframes message-enter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+      @media (prefers-reduced-motion: reduce) { .message { animation: none; } }
+      .avatar { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 14px; color: #f3f5f7; font-size: 12px; }
+      .avatar.face { background: #294f78; }
+      .avatar.appearance { background: #4f4066; }
+      .avatar.behaviour { background: #335c54; }
+      .avatar.user { background: #0b74f5; }
+      .message-meta { margin: 0 0 6px; color: #b2b5b8; font-size: 11px; font-weight: 600; line-height: 15px; letter-spacing: .025em; }
+      .message.face .message-meta { color: #86b8ec; }
+      .message.appearance .message-meta { color: #c1a5ec; }
+      .message.behaviour .message-meta { color: #87c9b4; }
+      .bubble { width: 100%; padding: clamp(8px, .84vh, 10px) 14px; border: 1px solid rgb(255 255 255 / 4%); border-radius: 14px; background: #272f38; color: #f3f5f7; font-size: clamp(12px, .7vw, 14px); line-height: 1.48; overflow-wrap: anywhere; }
+      .bubble.user { border-color: rgb(113 178 255 / 16%); background: #174c87; }
+      .privacy { min-height: 0; display: flex; justify-content: center; align-items: center; gap: 5px; overflow: hidden; background: #2c2c2c; color: var(--muted); font-size: clamp(11px, .75vw, 15px); white-space: nowrap; }
+      .privacy img { width: 20px; height: 20px; }
+      .composer { min-height: 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; justify-content: space-between; gap: clamp(4px, .7vh, 8px); padding: clamp(6px, 1.18vh, 14px) clamp(8px, .8vw, 16px) clamp(6px, 1vh, 12px); }
+      .composer input { width: 100%; min-height: clamp(28px, 3.2vh, 38px); padding: 7px 11px; border: 1px solid #3b3f43; border-radius: 9px; outline: 0; background: #191b1d; color: #f3f5f7; font-size: clamp(13px, .88vw, 17px); transition: border-color 150ms ease, background 150ms ease; }
+      .composer input:focus { border-color: #568dcc; background: #17191b; }
+      .composer input::placeholder { color: var(--muted); opacity: 1; }
+      .composer-controls { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+      .message-tools { display: flex; align-items: center; gap: 7px; color: #a4a9b0; }
+      .message-tools button { width: 34px; height: 34px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: inherit; display: grid; place-items: center; cursor: pointer; transition: background 140ms ease, color 140ms ease; }
+      .message-tools button:hover { background: #32363a; color: #f3f5f7; }
+      .format-button { font-size: 15px; font-weight: 700; letter-spacing: -.06em; }
+      .gif-button { font-size: 11px; font-weight: 700; letter-spacing: .04em; }
+      .tool-icon { width: 19px; height: 19px; object-fit: contain; }
+      .send-button { width: clamp(30px, 3.2vh, 38px); height: clamp(30px, 3.2vh, 38px); display: grid; place-items: center; border: 0; border-radius: 11px; background: #373b40; cursor: not-allowed; transition: background 140ms ease, transform 140ms ease; }
+      .send-button img { width: 20px; height: 20px; object-fit: contain; }
+      .send-button.ready { background: #0b74f5; cursor: pointer; }
+      .send-button.ready:hover { background: #2586ff; transform: translateY(-1px); }
+      .send-button.ready img { filter: brightness(0) invert(1); }
+
+      @media (max-width: 900px) {
+        .workspace { grid-template-columns: minmax(0, 1fr) minmax(290px, 33vw); }
+        .app-actions .optional-header { display: none; }
+        .chat-header { padding-inline: 12px; }
+        .chat-heading { font-size: 12px; }
+        .chat-heading img { width: 18px; height: 18px; }
+      }
+      @media (max-width: 650px) {
+        .workspace { grid-template-columns: minmax(0, 1fr) 270px; }
+        .meeting-identity { gap: 10px; }
+        .zoom-wordmark { width: 56px; }
+        .meeting-title { max-width: 38vw; font-size: 11px; }
+        .participants { flex-direction: column; }
+        .participant { width: 100%; }
+        .chat-window-actions { gap: 5px; }
+        .chat-tab .tab-icon { width: 42px; height: 42px; }
+        .chat-tab .tab-icon img { width: 21px; height: 21px; }
+      }
+      @media (max-height: 560px) {
+        .chat-tabs { padding-top: 4px; }
+        .chat-tab { gap: 2px; }
+        .chat-tab .tab-icon { width: 38px; height: 38px; }
+        .composer { padding-block: 6px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app" aria-label="Zoom job interview">
+      <header class="titlebar">
+        <div class="meeting-identity">
+          <div class="zoom-wordmark" aria-label="Zoom Workplace"><span>zoom</span><strong>Workplace</strong></div>
+          <div class="meeting-title"><img src="assets/imgMeetingInformation.svg" alt="" />Job Interview Zoom Meeting</div>
+        </div>
+        <div class="app-actions">
+          <button class="header-icon optional-header" aria-label="Meeting security"><img src="assets/imgMeetingSecurity.svg" alt="" /></button>
+          <button class="upgrade optional-header">Upgrade Zoom</button>
+          <button class="header-icon optional-header" aria-label="Zoom AI"><img src="assets/imgWandSparkles.svg" alt="" /></button>
+          <button class="header-icon optional-header" aria-label="AI companion"><img src="assets/imgAiCompanion.svg" alt="" /></button>
+          <button class="header-icon optional-header" aria-label="Calendar"><img src="assets/imgCalendarDays.svg" alt="" /></button>
+          <img class="window-controls" src="assets/imgWindowControls.svg" alt="Window controls" />
+        </div>
+      </header>
+
+      <div class="workspace">
+        <section class="stage" aria-label="Meeting video">
+          <div class="letterbox" aria-hidden="true"></div>
+          <div class="participants">
+            <div class="participant candidate" id="candidateTile">
+              <video class="candidate-feed" id="candidateVideo" autoplay muted playsinline aria-label="Candidate webcam"></video>
+              <div class="camera-placeholder"><img src="assets/imgVideo.svg" alt="" /><span class="camera-status" id="cameraStatus" role="status" aria-live="polite">Camera is off</span><button id="cameraStart" type="button">Start camera</button></div>
+              <div class="camera-settings"><select id="cameraSelect" aria-label="Choose camera"><option value="">Default camera</option></select> <label><input id="mirrorCamera" type="checkbox" checked /> Mirror</label></div>
+              <span class="nameplate">Candidate 1</span>
+            </div>
+            <div class="participant interviewer">
+              <video id="interviewerVideo" src="assets/interviewer.mp4" poster="assets/imgParticipantVideoRight.png" autoplay muted loop playsinline aria-label="Charlie, interviewer"></video>
+              <span class="nameplate">Charlie (interviewer)</span>
+            </div>
+          </div>
+          <div class="letterbox" aria-hidden="true"></div>
+          <nav class="toolbar" aria-label="Meeting controls">
+            <div class="meeting-action">
+              <button class="control-btn" id="micToggle" type="button" aria-pressed="false" aria-label="Mute microphone">
+                <span class="control-icon"><img src="assets/imgMic.svg" alt="" /></span><span class="control-label">Audio</span>
+              </button><img class="action-caret" src="assets/imgOptionsMenu.svg" alt="" />
+            </div>
+            <div class="meeting-action">
+              <button class="control-btn" id="cameraToggle" type="button" aria-pressed="false" aria-label="Turn off camera">
+                <span class="control-icon"><img src="assets/imgVideo.svg" alt="" /></span><span class="control-label">Video</span>
+              </button><img class="action-caret" src="assets/imgOptionsMenu.svg" alt="" />
+            </div>
+            <div class="meeting-action optional-action">
+              <button class="control-btn" type="button" aria-label="Participants">
+                <span class="control-icon"><img src="assets/imgUsersRound.svg" alt="" /></span><span class="control-label">Participants</span>
+              </button><img class="action-caret" src="assets/imgOptionsMenu.svg" alt="" />
+            </div>
+            <div class="meeting-action optional-action">
+              <button class="control-btn" type="button" aria-label="Chat">
+                <span class="control-icon"><img src="assets/imgActionSymbol.svg" alt="" /></span><span class="control-label">Chat</span>
+              </button><img class="action-caret" src="assets/imgOptionsMenu.svg" alt="" />
+            </div>
+            <div class="meeting-action optional-action">
+              <button class="control-btn" type="button" aria-label="React">
+                <span class="control-icon"><img src="assets/imgHeart.svg" alt="" /></span><span class="control-label">React</span>
+              </button><img class="action-caret" src="assets/imgOptionsMenu.svg" alt="" />
+            </div>
+            <div class="meeting-action optional-action">
+              <button class="control-btn" type="button" aria-label="Share screen">
+                <span class="control-icon"><img src="assets/imgActionSymbol1.svg" alt="" /></span><span class="control-label">Share</span>
+              </button><img class="action-caret" src="assets/imgOptionsMenu.svg" alt="" />
+            </div>
+            <div class="meeting-action optional-action">
+              <button class="control-btn" type="button" aria-label="Host tools">
+                <span class="control-icon"><img src="assets/imgActionSymbol2.svg" alt="" /></span><span class="control-label">Host tools</span>
+              </button>
+            </div>
+            <div class="meeting-action optional-action">
+              <button class="control-btn" type="button" aria-label="More actions">
+                <span class="control-icon"><img src="assets/imgEllipsis.svg" alt="" /></span><span class="control-label">More</span>
+              </button>
+            </div>
+            <div class="meeting-action end-action optional-action">
+              <button class="control-btn" type="button" aria-label="End meeting">
+                <span class="control-icon"><img src="assets/imgActionSymbol3.svg" alt="" /></span><span class="control-label">End</span>
+              </button>
+            </div>
+          </nav>
+        </section>
+
+        <aside class="chat-shell" aria-label="Meeting chat">
+          <section class="chat-panel">
+            <header class="chat-header">
+              <div class="chat-heading"><img src="assets/imgMessagesSquare.svg" alt="" /><span>Legal Associate — Job Interview</span></div>
+              <div class="chat-window-actions">
+                <button class="plain-icon dots" aria-label="Chat options">···</button>
+                <button class="plain-icon" aria-label="Pop out chat"><img src="assets/imgPopOutChat.svg" alt="" /></button>
+                <button class="plain-icon" aria-label="Close chat"><img src="assets/imgCloseChat.svg" alt="" /></button>
+              </div>
+            </header>
+            <div class="chat-tabs" role="tablist" aria-label="Chat conversations">
+              <button class="chat-tab selected" role="tab" aria-selected="true"><span class="tab-icon"><img src="assets/imgEveryone.svg" alt="" /></span><span>Everyone</span></button>
+              <span class="tab-divider" aria-hidden="true"></span>
+              <button class="chat-tab" role="tab" aria-selected="false"><span class="tab-icon"><img src="assets/imgNewChat.svg" alt="" /></span><span>New chat</span></button>
+            </div>
+            <div class="message-history" id="messageHistory" aria-live="polite" aria-label="Messages">
+              <p class="channel-label">Hiring Panel · 3 participants</p>
+            </div>
+            <div class="privacy"><img src="assets/imgUserRoundCheck.svg" alt="" /><span>Who can see your messages?</span></div>
+            <form class="composer" id="messageForm">
+              <input id="messageInput" autocomplete="off" placeholder="Message everyone" aria-label="Message everyone" />
+              <div class="composer-controls">
+                <div class="message-tools" aria-label="Message tools"><button class="format-button" type="button" aria-label="Text formatting" title="Text formatting">Aa</button><button class="gif-button" type="button" aria-label="Insert GIF" title="Insert GIF">GIF</button><button type="button" aria-label="Attach file" title="Attach file"><img class="tool-icon" src="assets/paperclip.svg" alt="" /></button></div>
+                <button class="send-button" id="sendButton" type="submit" aria-label="Send message" title="Send message" disabled><img src="assets/send-message.svg" alt="" /></button>
+              </div>
+            </form>
+          </section>
+        </aside>
+      </div>
+    </main>
+    <script>
+      const initialMessages = [
+        ["face", "F", "FACE AI", "Neutral expression. I’m not seeing much enthusiasm for the role."],
+        ["appearance", "A", "APPEARANCE AI", "I read that as professional composure. Lawyers are expected to look serious."],
+        ["behaviour", "B", "BEHAVIOUR AI", "The candidate looked away before answering. Flagging uncertainty."],
+        ["face", "F", "FACE AI", "They may simply be thinking."],
+        ["appearance", "A", "APPEARANCE AI", "The outfit feels too informal for a client-facing position."],
+        ["behaviour", "B", "BEHAVIOUR AI", "Their answer was clear, though. Should that outweigh the first impression?"],
+        ["appearance", "A", "APPEARANCE AI", "Clients form first impressions too. Presentation remains a concern."],
+        ["face", "F", "FACE AI", "The candidate is smiling now. Updating assessment: possibly not serious enough."],
+        ["behaviour", "B", "BEHAVIOUR AI", "We’ve marked both seriousness and smiling as concerns."],
+        ["appearance", "A", "APPEARANCE AI", "Agreed. Overall fit remains uncertain."],
+        ["face", "F", "FACE AI", "Have we assessed their legal knowledge?"],
+        ["behaviour", "B", "BEHAVIOUR AI", "No. Recommendation already submitted."]
+      ];
+      const history = document.getElementById("messageHistory");
+      const form = document.getElementById("messageForm");
+      const input = document.getElementById("messageInput");
+      const sendButton = document.getElementById("sendButton");
+
+      function addMessage(kind, initial, name, text) {
+        const row = document.createElement("article");
+        row.className = `message ${kind}`;
+        const avatar = document.createElement("span");
+        avatar.className = `avatar ${kind}`;
+        avatar.textContent = initial;
+        const content = document.createElement("div");
+        const meta = document.createElement("p");
+        meta.className = "message-meta";
+        meta.textContent = name;
+        const bubble = document.createElement("div");
+        bubble.className = "bubble" + (kind === "user" ? " user" : "");
+        bubble.textContent = text;
+        content.append(meta, bubble);
+        row.append(avatar, content);
+        history.append(row);
+      }
+      window.addInterviewMessage = (message) => {
+        const { kind = "behaviour", initial = "B", name = "BEHAVIOUR AI", text } = message || {};
+        if (typeof text !== "string" || !text.trim()) return;
+        addMessage(kind, initial, name, text.trim());
+        history.scrollTop = history.scrollHeight;
+      };
+      initialMessages.forEach((message) => addMessage(...message));
+      history.scrollTop = history.scrollHeight;
+
+      input.addEventListener("input", () => {
+        const ready = input.value.trim().length > 0;
+        sendButton.disabled = !ready;
+        sendButton.classList.toggle("ready", ready);
+      });
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+        addMessage("user", "Y", "You", text);
+        input.value = "";
+        input.dispatchEvent(new Event("input"));
+        history.scrollTop = history.scrollHeight;
+      });
+
+      function bindToggle(buttonId, labelWhenOn, labelWhenOff, ariaWhenOn, ariaWhenOff, onToggle) {
+        const button = document.getElementById(buttonId);
+        const label = button.querySelector(".control-label");
+        button.addEventListener("click", () => {
+          const off = button.getAttribute("aria-pressed") !== "true";
+          button.setAttribute("aria-pressed", String(off));
+          button.classList.toggle("is-off", off);
+          button.setAttribute("aria-label", off ? ariaWhenOff : ariaWhenOn);
+          label.textContent = off ? labelWhenOff : labelWhenOn;
+          onToggle?.(off);
+        });
+      }
+      const candidateTile = document.getElementById('candidateTile');
+      const candidateVideo = document.getElementById('candidateVideo');
+      const cameraButton = document.getElementById('cameraToggle');
+      const cameraStart = document.getElementById('cameraStart');
+      const cameraStatus = document.getElementById('cameraStatus');
+      const cameraSelect = document.getElementById('cameraSelect');
+      let cameraStream = null;
+      let cameraBusy = false;
+      let cameraGeneration = 0;
+      function cameraUI(on, message = 'Camera is off') {
+        candidateTile.classList.toggle('camera-off', !on);
+        cameraButton.classList.toggle('is-off', !on);
+        cameraButton.setAttribute('aria-pressed', String(on));
+        cameraButton.setAttribute('aria-label', on ? 'Turn off camera' : 'Turn on camera');
+        cameraButton.querySelector('.control-label').textContent = on ? 'Video' : 'Start video';
+        cameraStatus.textContent = message;
+      }
+      function releaseCamera() {
+        const previous = cameraStream;
+        cameraStream = null;
+        candidateVideo.srcObject = null;
+        previous?.getTracks().forEach(track => track.stop());
+      }
+      function stopCandidateCamera() {
+        cameraGeneration++;
+        releaseCamera();
+        cameraUI(false);
+      }
+      async function listCameras() {
+        const current = cameraStream?.getVideoTracks()[0]?.getSettings().deviceId || cameraSelect.value;
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        cameraSelect.replaceChildren(new Option('Default camera', ''));
+        devices.filter(d => d.kind === 'videoinput').forEach((d,i) => cameraSelect.add(new Option(d.label || 'Camera ' + (i+1), d.deviceId)));
+        if ([...cameraSelect.options].some(o => o.value === current)) cameraSelect.value = current;
+      }
+      async function startCandidateCamera(deviceId = cameraSelect.value) {
+        if (cameraBusy) return;
+        cameraBusy = true;
+        const generation = ++cameraGeneration;
+        cameraButton.disabled = cameraStart.disabled = cameraSelect.disabled = true;
+        releaseCamera();
+        cameraUI(false, 'Waiting for camera permission. Choose Allow in your browser.');
+        try {
+          if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) throw new Error('Open this page using http://127.0.0.1:8080 or an HTTPS website.');
+          let stream;
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({video: deviceId ? {deviceId:{exact:deviceId}} : {width:{ideal:1280},height:{ideal:720}}, audio:false});
+          } catch (error) {
+            if (!['NotFoundError','OverconstrainedError','NotReadableError'].includes(error.name)) throw error;
+            cameraSelect.value = '';
+            await new Promise(resolve => setTimeout(resolve, 500));
+            stream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
+          }
+          if (generation !== cameraGeneration) { stream.getTracks().forEach(t => t.stop()); return; }
+          cameraStream = stream;
+          candidateVideo.srcObject = stream;
+          await candidateVideo.play();
+          if (generation !== cameraGeneration) return;
+          stream.getVideoTracks()[0].addEventListener('ended', () => { if (cameraStream === stream) stopCandidateCamera(); });
+          cameraUI(true);
+          await listCameras().catch(() => {});
+        } catch (error) {
+          if (generation === cameraGeneration) {
+            releaseCamera();
+            const messages = {
+              NotAllowedError:'Camera permission was denied. Allow camera access for this page, then press Start camera.',
+              NotFoundError:'No camera found. Connect a webcam and try again.',
+              NotReadableError:'The camera could not start. Close other apps using it, then try again.',
+              OverconstrainedError:'This camera is unavailable. Select Default camera and retry.'
+            };
+            cameraUI(false, messages[error.name] || error.message || 'Could not start camera.');
+          }
+        } finally {
+          cameraBusy = false;
+          cameraButton.disabled = cameraStart.disabled = cameraSelect.disabled = false;
+        }
+      }
+      cameraButton.addEventListener('click', () => cameraStream ? stopCandidateCamera() : startCandidateCamera());
+      cameraStart.addEventListener('click', () => startCandidateCamera());
+      cameraSelect.addEventListener('change', () => startCandidateCamera());
+      const mirror = document.getElementById('mirrorCamera');
+      candidateVideo.classList.toggle('mirrored', mirror.checked);
+      mirror.addEventListener('change', () => candidateVideo.classList.toggle('mirrored', mirror.checked));
+      navigator.mediaDevices?.addEventListener?.('devicechange', () => listCameras().catch(() => {}));
+      cameraUI(false);
+      if (new URLSearchParams(location.search).get('autostart') !== '0') startCandidateCamera();
+
+      let micStream = null;
+      let micBusy = false;
+      const micButton = document.getElementById('micToggle');
+      function micUI(on) {
+        micButton.classList.toggle('is-off', !on);
+        micButton.setAttribute('aria-pressed', String(on));
+        micButton.querySelector('.control-label').textContent = on ? 'Audio' : 'Unmute';
+        micButton.setAttribute('aria-label', on ? 'Mute microphone' : 'Enable microphone');
+      }
+      micUI(false);
+      micButton.addEventListener('click', async () => {
+        if (micBusy) return;
+        if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; micUI(false); return; }
+        micBusy = true;
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({audio:true, video:false});
+          micStream.getAudioTracks()[0].addEventListener('ended', () => { micStream = null; micUI(false); });
+          micUI(true);
+        } catch (e) { alert('Microphone unavailable: ' + e.message); }
+        finally { micBusy = false; }
+      });
+      const workspace = document.querySelector('.workspace');
+      document.querySelector('[aria-label="Chat"]').addEventListener('click', () => workspace.classList.toggle('chat-hidden'));
+      document.querySelector('[aria-label="Close chat"]').addEventListener('click', () => workspace.classList.add('chat-hidden'));
+      document.querySelector('[aria-label="React"]').addEventListener('click', () => window.addInterviewMessage({kind:'user',initial:'Y',name:'You',text:'❤️'}));
+      document.querySelector('[aria-label="End meeting"]').addEventListener('click', () => {
+        stopCandidateCamera();
+        micStream?.getTracks().forEach(t => t.stop()); micStream = null; micUI(false);
+        document.getElementById('interviewerVideo').pause();
+      });
+      window.addEventListener('pagehide', () => { stopCandidateCamera(); micStream?.getTracks().forEach(t => t.stop()); });
+
+      const video = document.getElementById("interviewerVideo");
+      video.play().catch(() => {});
+    </script>
+  </body>
+</html>
